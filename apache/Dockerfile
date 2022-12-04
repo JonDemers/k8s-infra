@@ -15,8 +15,9 @@ COPY sites-available/* sites-available/
 RUN a2enmod ssl
 RUN a2enmod proxy
 RUN a2enmod proxy_http
-RUN a2ensite pve.conf
 RUN a2ensite jenkins.conf
+RUN a2ensite pve.conf
+RUN a2ensite router.conf
 
 EXPOSE 80
 CMD ["apachectl", "-D", "FOREGROUND"]
