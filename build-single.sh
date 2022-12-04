@@ -22,6 +22,6 @@ docker tag $docker_name $DOCKER_IMAGE
 
 docker push $DOCKER_IMAGE
 
-kubectl apply -f secret.yml
+test -f secret.yml && kubectl apply -f secret.yml
 
 cat k8s.yml | envsubst | kubectl apply -f -
