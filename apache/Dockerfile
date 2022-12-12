@@ -13,7 +13,8 @@ RUN sed -i -r 's/.*OIDCStateMaxNumberOfCookies.*/OIDCStateMaxNumberOfCookies 7 t
 
 WORKDIR /etc/apache2/
 
-COPY sites-available/* sites-available/
+COPY www/ /var/www/
+COPY sites-available/ sites-available/
 
 RUN a2enmod ssl
 RUN a2enmod proxy
@@ -21,6 +22,7 @@ RUN a2enmod proxy_http
 RUN a2enmod proxy_wstunnel
 RUN a2enmod rewrite
 
+RUN a2ensite blogs.conf
 RUN a2ensite jellyfin.conf
 RUN a2ensite jenkins.conf
 RUN a2ensite k8s.conf
