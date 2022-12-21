@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-registry-service
+spec:
+  selector:
+    app: docker-registry
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-registry-persistent-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/docker-registry"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-registry-persistent-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-registry-deployment
+  labels:
+    app: docker-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-registry
+  template:
+    metadata:
+      labels:
+        app: docker-registry
+    spec:
+      volumes:
+      - name: docker-registry-volume
+        persistentVolumeClaim:
+          claimName: docker-registry-persistent-volume-claim
+      containers:
+      - name: docker-registry
+        image: "registry:2"
+        ports:
+        - name: http
+          containerPort: 5000
+        volumeMounts:
+        - mountPath: "/var/lib/registry"
+          name: docker-registry-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: docker-registry-secret
