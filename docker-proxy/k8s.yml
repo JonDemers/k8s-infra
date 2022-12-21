@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-proxy-service
+spec:
+  selector:
+    app: docker-proxy
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-proxy-persistent-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/docker-proxy"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-proxy-persistent-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-proxy-deployment
+  labels:
+    app: docker-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-proxy
+  template:
+    metadata:
+      labels:
+        app: docker-proxy
+    spec:
+      volumes:
+      - name: docker-proxy-volume
+        persistentVolumeClaim:
+          claimName: docker-proxy-persistent-volume-claim
+      containers:
+      - name: docker-proxy
+        image: "registry:2"
+        ports:
+        - name: http
+          containerPort: 5000
+        volumeMounts:
+        - mountPath: "/var/lib/registry"
+          name: docker-proxy-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        env:
+        - name: REGISTRY_PROXY_REMOTEURL
+          value: "https://registry-1.docker.io"
+        envFrom:
+        - secretRef:
+            name: docker-proxy-secret
