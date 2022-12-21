@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: apt-cacher-ng-service
+spec:
+  type: NodePort
+  selector:
+    app: apt-cacher-ng
+  ports:
+  - protocol: TCP
+    port: 3142
+    targetPort: 3142
+    nodePort: 30142
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: apt-cacher-ng-persistent-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/apt-cacher-ng"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: apt-cacher-ng-persistent-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apt-cacher-ng-deployment
+  labels:
+    app: apt-cacher-ng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apt-cacher-ng
+  template:
+    metadata:
+      labels:
+        app: apt-cacher-ng
+    spec:
+      volumes:
+      - name: apt-cacher-ng-volume
+        persistentVolumeClaim:
+          claimName: apt-cacher-ng-persistent-volume-claim
+      containers:
+      - name: apt-cacher-ng
+        image: "$DOCKER_IMAGE"
+        ports:
+        - name: http
+          containerPort: 3142
+        volumeMounts:
+        - mountPath: "/var/cache/apt-cacher-ng"
+          name: apt-cacher-ng-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: apt-cacher-ng-secret
