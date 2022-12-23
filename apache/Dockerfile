@@ -22,7 +22,6 @@ RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available
         proxy_wstunnel \
         rewrite && \
     a2ensite \
-        apt-cacher-ng.conf \
         blogs.conf \
         docker-proxy.conf \
         docker-registry.conf \
