@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-service
+spec:
+  selector:
+    app: mariadb
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mariadb-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: mariadb-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/mariadb"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-persistent-volume-claim
+spec:
+  volumeName: mariadb-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb-stateful-set
+  labels:
+    app: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      volumes:
+      - name: mariadb-volume
+        persistentVolumeClaim:
+          claimName: mariadb-persistent-volume-claim
+      containers:
+      - name: mariadb
+        image: "mariadb:10"
+        ports:
+        - name: tcp
+          containerPort: 3306
+        volumeMounts:
+        - mountPath: "/var/lib/mysql/"
+          name: mariadb-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: mariadb-secret
