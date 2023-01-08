@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-service
+spec:
+  selector:
+    app: nextcloud
+  ports:
+  - protocol: TCP
+    port: 443
+    targetPort: 443
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nextcloud-config-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: nextcloud-config-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/nextcloud/config"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nextcloud-data-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: nextcloud-data-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/nextcloud/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-config-persistent-volume-claim
+spec:
+  volumeName: nextcloud-config-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-data-persistent-volume-claim
+spec:
+  volumeName: nextcloud-data-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nextcloud-stateful-set
+  labels:
+    app: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      volumes:
+      - name: nextcloud-config-volume
+        persistentVolumeClaim:
+          claimName: nextcloud-config-persistent-volume-claim
+      - name: nextcloud-data-volume
+        persistentVolumeClaim:
+          claimName: nextcloud-data-persistent-volume-claim
+      containers:
+      - name: nextcloud
+        image: "linuxserver/nextcloud:25.0.2"
+        ports:
+        - name: tcp
+          containerPort: 443
+        volumeMounts:
+        - mountPath: "/config"
+          name: nextcloud-config-volume
+        - mountPath: "/data"
+          name: nextcloud-data-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 2000m
+        envFrom:
+        - secretRef:
+            name: nextcloud-secret
