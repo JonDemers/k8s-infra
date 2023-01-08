@@ -19,6 +19,9 @@ metadata:
   labels:
     type: local
 spec:
+  claimRef:
+    namespace: default
+    name: apt-cacher-ng-persistent-volume-claim
   storageClassName: manual
   capacity:
     storage: 20Gi
@@ -32,6 +35,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: apt-cacher-ng-persistent-volume-claim
 spec:
+  volumeName: apt-cacher-ng-persistent-volume
   storageClassName: manual
   accessModes:
   - ReadWriteOnce
