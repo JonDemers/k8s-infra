@@ -23,12 +23,11 @@ RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available
         rewrite && \
     a2ensite \
         blogs.conf \
-        docker-proxy.conf \
-        docker-registry.conf \
         jellyfin.conf \
         jenkins.conf \
         k8s.conf \
         mern.conf \
+        nextcloud.conf \
         pve.conf \
         router.conf \
         webtop.conf
