@@ -20,8 +20,17 @@ if [ -f "Dockerfile" ]; then
   docker push $DOCKER_IMAGE
 fi
 
+../delete-single.sh "$name"
+
+if [ -d "config-map-from-file" ]; then
+  cd config-map-from-file
+  for file in *; do
+    kubectl create configmap $name-$file-config-map --from-file=$file
+  done
+  cd ..
+fi
+
 if [ -f "secret.yml" ]; then
-  kubectl delete -f secret.yml || true
   kubectl apply -f secret.yml
 fi
 
