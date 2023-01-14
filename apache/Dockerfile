@@ -23,6 +23,7 @@ RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available
         rewrite && \
     a2ensite \
         blogs.conf \
+        filebrowser.conf \
         jellyfin.conf \
         jenkins.conf \
         k8s.conf \

@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: filebrowser-service
+spec:
+  selector:
+    app: filebrowser
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: filebrowser-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/filebrowser"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: filebrowser-persistent-volume-claim
+spec:
+  volumeName: filebrowser-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: filebrowser-stateful-set
+  labels:
+    app: filebrowser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: filebrowser
+  template:
+    metadata:
+      labels:
+        app: filebrowser
+    spec:
+      volumes:
+      - name: filebrowser-json
+        configMap:
+          name: filebrowser-filebrowser.json-config-map
+          items:
+          - key: "filebrowser.json"
+            path: ".filebrowser.json"
+      - name: test-todo-delete-me-conf
+        configMap:
+          name: filebrowser-test-todo-delete-me.conf-config-map
+          items:
+          - key: "test-todo-delete-me.conf"
+            path: "target-filename-test-todo-delete-me.conf"
+      - name: filebrowser-volume
+        persistentVolumeClaim:
+          claimName: filebrowser-persistent-volume-claim
+      containers:
+      - name: filebrowser
+        image: "filebrowser/filebrowser:v2.23.0"
+        ports:
+        - name: tcp
+          containerPort: 80
+        volumeMounts:
+        - mountPath: "/.filebrowser.json"
+          subPath: ".filebrowser.json"
+          name: filebrowser-json
+        - mountPath: "/test/file/in/sub/dir/target-filename-test-todo-delete-me.conf"
+          subPath: "target-filename-test-todo-delete-me.conf"
+          name: test-todo-delete-me-conf
+        - mountPath: "/persistent-volume"
+          name: filebrowser-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: filebrowser-secret

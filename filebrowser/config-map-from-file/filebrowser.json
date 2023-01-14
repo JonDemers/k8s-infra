@@ -1,0 +1,8 @@
+{
+    "port": 80,
+    "baseURL": "",
+    "address": "",
+    "log": "stdout",
+    "database": "/persistent-volume/database.db",
+    "root": "/persistent-volume/srv"
+}
