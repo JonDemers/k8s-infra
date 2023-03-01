@@ -22,6 +22,7 @@ RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available
         proxy_wstunnel \
         rewrite && \
     a2ensite \
+        ROOT_DOMAIN_02.conf \
         blogs.conf \
         filebrowser.conf \
         jellyfin.conf \
@@ -31,7 +32,9 @@ RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available
         nextcloud.conf \
         pve.conf \
         router.conf \
-        webtop.conf
+        webtop.conf \
+        wyze.conf \
+        yunohost.conf
 
 EXPOSE 80
 
