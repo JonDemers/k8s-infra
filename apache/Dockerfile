@@ -4,6 +4,8 @@ RUN echo 'Acquire::http { Proxy "http://apt-cacher-ng.k8s.lan:30142"; }' > /etc/
 
 RUN apt -y update && \
     apt -y install \
+        curl \
+        telnet \
         gettext-base \
         apache2 \
         apache2-utils \
