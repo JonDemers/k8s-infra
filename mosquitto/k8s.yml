@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-service
+spec:
+  type: NodePort
+  selector:
+    app: mosquitto
+  ports:
+  - protocol: TCP
+    port: 1883
+    targetPort: 1883
+    nodePort: 31883
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mosquitto-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: mosquitto-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/mosquitto"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mosquitto-persistent-volume-claim
+spec:
+  volumeName: mosquitto-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mosquitto-stateful-set
+  labels:
+    app: mosquitto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      volumes:
+      - name: mosquitto-conf
+        configMap:
+          name: mosquitto-mosquitto.conf-config-map
+          items:
+          - key: "mosquitto.conf"
+            path: "mosquitto.conf"
+      - name: mosquitto-volume
+        persistentVolumeClaim:
+          claimName: mosquitto-persistent-volume-claim
+      containers:
+      - name: mosquitto
+        image: "eclipse-mosquitto:2.0"
+        ports:
+        - name: tcp
+          containerPort: 80
+        volumeMounts:
+        - mountPath: "/mosquitto/config/mosquitto.conf"
+          subPath: "mosquitto.conf"
+          name: mosquitto-conf
+        - mountPath: "/mosquitto"
+          name: mosquitto-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: mosquitto-secret
