@@ -21,6 +21,7 @@ RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available
     sed -i -r 's/.*OIDCStateMaxNumberOfCookies.*/OIDCStateMaxNumberOfCookies 7 true/' /etc/apache2/mods-available/auth_openidc.conf && \
     a2enmod \
         ssl \
+        headers \
         proxy \
         proxy_http \
         proxy_wstunnel \

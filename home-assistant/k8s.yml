@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: home-assistant-service
+spec:
+  selector:
+    app: home-assistant
+  ports:
+  - protocol: TCP
+    port: 8123
+    targetPort: 8123
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: home-assistant-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: home-assistant-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/home-assistant"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: home-assistant-persistent-volume-claim
+spec:
+  volumeName: home-assistant-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: home-assistant-stateful-set
+  labels:
+    app: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-assistant
+  template:
+    metadata:
+      labels:
+        app: home-assistant
+    spec:
+      volumes:
+      - name: home-assistant-volume
+        persistentVolumeClaim:
+          claimName: home-assistant-persistent-volume-claim
+      containers:
+      - name: home-assistant
+        image: "ghcr.io/home-assistant/home-assistant:stable"
+        ports:
+        - name: tcp
+          containerPort: 80
+        volumeMounts:
+        - mountPath: "/config"
+          name: home-assistant-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: home-assistant-secret
