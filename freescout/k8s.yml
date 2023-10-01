@@ -77,7 +77,7 @@ spec:
         - mountPath: "/freescout/config/freescout.conf"
           subPath: "freescout.conf"
           name: freescout-conf
-        - mountPath: "/freescout"
+        - mountPath: "/data"
           name: freescout-volume
         resources:
           requests:
