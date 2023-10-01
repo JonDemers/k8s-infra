@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: freescout-service
+spec:
+  selector:
+    app: freescout
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: freescout-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: freescout-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/freescout"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: freescout-persistent-volume-claim
+spec:
+  volumeName: freescout-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: freescout-stateful-set
+  labels:
+    app: freescout
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: freescout
+  template:
+    metadata:
+      labels:
+        app: freescout
+    spec:
+      volumes:
+      - name: freescout-conf
+        configMap:
+          name: freescout-freescout.conf-config-map
+          items:
+          - key: "freescout.conf"
+            path: "freescout.conf"
+      - name: freescout-volume
+        persistentVolumeClaim:
+          claimName: freescout-persistent-volume-claim
+      containers:
+      - name: freescout
+        image: "tiredofit/freescout:php8.2-1.17.32"
+        ports:
+        - name: tcp
+          containerPort: 80
+        volumeMounts:
+        - mountPath: "/freescout/config/freescout.conf"
+          subPath: "freescout.conf"
+          name: freescout-conf
+        - mountPath: "/freescout"
+          name: freescout-volume
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 1000m
+        envFrom:
+        - secretRef:
+            name: freescout-secret
