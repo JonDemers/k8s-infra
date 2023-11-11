@@ -3,6 +3,7 @@ FROM debian:bullseye
 RUN echo 'Acquire::http { Proxy "http://apt-cacher-ng.k8s.lan:30142"; }' > /etc/apt/apt.conf.d/00aptproxy
 
 RUN apt -y update && \
+    apt -y dist-upgrade && \
     apt -y install \
         curl \
         telnet \
@@ -10,6 +11,7 @@ RUN apt -y update && \
         apache2 \
         apache2-utils \
         libapache2-mod-auth-openidc && \
+    apt -y autoremove && \
     apt clean
 
 WORKDIR /etc/apache2/
@@ -18,7 +20,7 @@ COPY sites-available/ sites-available/
 COPY start-apache.sh /root/
 
 RUN cp /etc/apache2/mods-available/auth_openidc.conf /etc/apache2/mods-available/auth_openidc.conf.original && \
-    sed -i -r 's/.*OIDCStateMaxNumberOfCookies.*/OIDCStateMaxNumberOfCookies 7 true/' /etc/apache2/mods-available/auth_openidc.conf && \
+    sed -i -r 's/.*OIDCStateMaxNumberOfCookies.*/OIDCStateMaxNumberOfCookies 5 true/' /etc/apache2/mods-available/auth_openidc.conf && \
     a2enmod \
         ssl \
         headers \
