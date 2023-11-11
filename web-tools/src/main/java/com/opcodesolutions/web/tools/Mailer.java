@@ -20,7 +20,14 @@ public class Mailer extends HttpServlet {
 	}
 
 	@Override
-	protected void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType("text/plain");
+		response.getWriter().print("OK");
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String toEmailList = null;
 
 		try {
@@ -56,7 +63,6 @@ public class Mailer extends HttpServlet {
 				}
 			}
 			String body = bodyBuilder.toString();
-
 
 			MailUtils.sendEmail(fromEmail, email, toEmailList, ccEmailList, bccEmailList, subject, body);
 
