@@ -75,7 +75,7 @@ spec:
           claimName: filebrowser-persistent-volume-claim
       containers:
       - name: filebrowser
-        image: "filebrowser/filebrowser:v2.23.0"
+        image: "filebrowser/filebrowser:v2.26.0"
         ports:
         - name: tcp
           containerPort: 80
