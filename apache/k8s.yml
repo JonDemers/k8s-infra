@@ -28,6 +28,37 @@ spec:
     port: 80
     targetPort: 80
 ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: apache-persistent-volume
+  labels:
+    type: local
+spec:
+  claimRef:
+    namespace: default
+    name: apache-persistent-volume-claim
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+  - ReadWriteOnce
+  hostPath:
+    path: "/mnt/sdb1/apache"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: apache-persistent-volume-claim
+spec:
+  volumeName: apache-persistent-volume
+  storageClassName: manual
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,12 +75,19 @@ spec:
       labels:
         app: apache
     spec:
+      volumes:
+      - name: apache-volume
+        persistentVolumeClaim:
+          claimName: apache-persistent-volume-claim
       containers:
       - name: apache
         image: "$DOCKER_IMAGE"
         ports:
         - name: http
           containerPort: 80
+        volumeMounts:
+        - mountPath: "/var/log/apache2"
+          name: apache-volume
         resources:
           requests:
             cpu: 100m
