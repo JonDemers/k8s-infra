@@ -41,8 +41,12 @@ public class Mailer extends HttpServlet {
 			String subject = request.getParameter("subject");
 			StringBuilder bodyBuilder = new StringBuilder();
 			String confirmation = null;
+			boolean sendEmail = true;
 			for (Map.Entry<String, String[]> bodyPart : request.getParameterMap().entrySet()) {
 				for (String bodyPartValue : bodyPart.getValue()) {
+					if ("No Javascript".equals(bodyPartValue)) {
+						sendEmail = false;
+					}
 					bodyPartValue = bodyPartValue.trim();
 					boolean isMultiLine = bodyPartValue.contains("\n");
 					if (isMultiLine) {
@@ -64,12 +68,15 @@ public class Mailer extends HttpServlet {
 			}
 			String body = bodyBuilder.toString();
 
-			MailUtils.sendEmail(fromEmail, email, toEmailList, ccEmailList, bccEmailList, subject, body);
+			if (sendEmail) {
+				MailUtils.sendEmail(fromEmail, email, toEmailList, ccEmailList, bccEmailList, subject, body);
+			}
 
-			response.setStatus(HttpServletResponse.SC_OK);
+			response.setStatus(sendEmail ? HttpServletResponse.SC_OK : HttpServletResponse.SC_FORBIDDEN);
 			response.setContentType("text/plain");
 			PrintWriter writer = response.getWriter();
-			writer.println("Thank you, we'll get back to you shortly.");
+			writer.println(sendEmail ? "Thank you, we'll get back to you shortly."
+					: "Your message was not sent because you've been detected as a bot!");
 			writer.println("\n------------------------------------------\n");
 			writer.println(confirmation != null ? confirmation : body);
 
