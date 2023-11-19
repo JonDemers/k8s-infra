@@ -70,6 +70,12 @@ spec:
           items:
           - key: "test-todo-delete-me.conf"
             path: "target-filename-test-todo-delete-me.conf"
+      - name: branding-img-icons
+        configMap:
+          name: filebrowser-branding-img-icons-config-map
+      - name: branding-img
+        configMap:
+          name: filebrowser-branding-img-config-map
       - name: filebrowser-volume
         persistentVolumeClaim:
           claimName: filebrowser-persistent-volume-claim
@@ -86,6 +92,10 @@ spec:
         - mountPath: "/test/file/in/sub/dir/target-filename-test-todo-delete-me.conf"
           subPath: "target-filename-test-todo-delete-me.conf"
           name: test-todo-delete-me-conf
+        - mountPath: "/branding/img/icons"
+          name: branding-img-icons
+        - mountPath: "/branding/img"
+          name: branding-img
         - mountPath: "/persistent-volume"
           name: filebrowser-volume
         resources:
